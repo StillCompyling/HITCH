@@ -155,6 +155,8 @@
     transition: none; text-transform: uppercase; letter-spacing: 0.05em;
   }
   .btn-primary:active { transform: translate(4px,4px); box-shadow: 0 0 0 #000; }
+  .btn-primary:disabled { background: #b9b3a6; color: #555; cursor: not-allowed;
+    box-shadow: 2px 2px 0 #000; transform: none; }
 
   /* ---- log cards (mood-coded) ---- */
   .log-card { padding: 14px 16px; margin-top: 14px; position: relative; overflow: hidden;
@@ -383,9 +385,21 @@ function buildPills(container, names, current, onPick){
 }
 
 /* ---------------- LOG tab ---------------- */
+let lockTimer; // re-enables Log Entry button after the cooldown
+function enableSaveBtn(){
+  clearTimeout(lockTimer);
+  const b = $("save-btn"); if (b) b.disabled = false;
+}
+function disableSaveBtn(){
+  const b = $("save-btn"); if (b) b.disabled = true;
+  clearTimeout(lockTimer);
+  lockTimer = setTimeout(enableSaveBtn, 5 * 60 * 1000);
+}
 function renderLogPeople(){
   buildPills($("log-people"), PEOPLE, selectedPerson, n => {
+    const changed = n !== selectedPerson;
     selectedPerson = n; renderLogPeople();
+    if (changed) enableSaveBtn(); // different person selected -> re-enable
   });
 }
 const MOOD_FACES = { 1: "🫩", 2: "😮‍💨", 3: "😐", 4: "😊", 5: "😄" }; // exhausted -> excited
@@ -419,15 +433,14 @@ async function saveEntry(){
   if (saving) return;
   saving = true;
   try {
-    const now = Date.now();
-    // duplicate guard: block if same person logged within last 1 minute
+    // duplicate guard: block if same person logged within last 5 minutes
     const existing = await getAll();
-    const dup = existing.some(e =>
-      e.person === selectedPerson &&
-      Math.abs(now - new Date(e.timestamp).getTime()) < 1 * 60 * 1000
+    const dup = existing.some(entry =>
+      entry.person === selectedPerson &&
+      (new Date() - new Date(entry.timestamp)) < 5 * 60 * 1000
     );
     if (dup){
-      showToast(`⚠ Already logged for ${selectedPerson} recently. Wait 1 min.`);
+      showToast("⚠ Already logged for " + selectedPerson + ". Wait 5 mins.");
       return;
     }
     const entry = {
@@ -441,6 +454,7 @@ async function saveEntry(){
     await addEntry(entry);
     showToast(`✓ Logged for ${selectedPerson}`);
     resetForm();
+    disableSaveBtn(); // lock button for 5 min for this person
   } finally {
     saving = false;
   }
