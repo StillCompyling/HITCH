@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a2e">
+<meta name="apple-mobile-web-app-title" content="Trail Log">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Press+Start+2P&display=swap">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='192'%20height='192'%20viewBox='0%200%20192%20192'%3E%3Crect%20width='192'%20height='192'%20rx='42'%20fill='%230c2230'/%3E%3Cpath%20d='M30%20150L78%2066l30%2050%2018-28%2036%2062z'%20fill='%237fb0c0'/%3E%3Cpath%20d='M78%2066l30%2050%2018-28%2036%2062H96z'%20fill='%23dfeef2'%20opacity='0.85'/%3E%3C/svg%3E">
+<title>Trail Log</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --cream: #F5F0E8;
+    --ink: #000000;
+    --yellow: #E6B85C;
+    --red: #FF3D3D;
+    --blue: #2979FF;
+    --purple: #6A0DAD;
+    --green: #00C851;
+    --orange: #FF8C00;
+    --moodblue: #4A90E2;
+    --grey: #777;
+    --pixel: 'Press Start 2P', monospace;
+    --inter: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'Inter', system-ui, sans-serif;
+    --shadow: 4px 4px 0 #000;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+  html, body {
+    height: 100%;
+    font-family: var(--inter);
+    font-weight: 400;
+    color: var(--ink);
+    overflow: hidden;
+    background: var(--cream);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* background is flat cream — hide old pixel-mountain layers */
+  #bg { position: fixed; inset: 0; z-index: -2; background: var(--cream); }
+  #bg > * { display: none; }
+
+  #app {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    padding-top: var(--safe-top);
+  }
+  /* ---- header bar ---- */
+  header.app-head {
+    background: var(--ink); color: #fff;
+    padding: 16px 16px; display: flex; align-items: center; gap: 14px;
+  }
+  header.app-head h1 {
+    font-family: var(--pixel); font-size: 18px; letter-spacing: 1px;
+  }
+  header.app-head h1 .t-y { color: var(--yellow); }
+  header.app-head h1 .t-k { color: #fff; }
+  header.app-head p {
+    font-family: var(--inter); font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    color: var(--green); display: flex; align-items: center; gap: 6px;
+  }
+  header.app-head .dot {
+    width: 9px; height: 9px; background: var(--green); border-radius: 50%;
+    animation: pulse 1.1s steps(1) infinite;
+  }
+  @keyframes pulse { 0%,49%{opacity:1;} 50%,100%{opacity:.25;} }
+
+  main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 12px 16px calc(96px + var(--safe-bot)); }
+  .tab-view { display: none; }
+  .tab-view.active { display: block; }
+
+  /* ---- chunky panel (was .glass) ---- */
+  .glass {
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 0;
+    box-shadow: var(--shadow);
+  }
+
+  /* ---- pill row ---- */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+  .pill {
+    font-family: var(--inter); font-weight: 700; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 10px 14px;
+    border-radius: 0; background: var(--cream); color: var(--ink);
+    border: 2px solid var(--ink); cursor: pointer;
+  }
+  .pill.active {
+    background: var(--ink); color: #fff; box-shadow: 3px 3px 0 var(--yellow);
+  }
+  .pill:active { transform: translate(2px,2px); }
+
+  .panel { padding: 16px; margin-top: 14px; }
+  .label {
+    font-family: var(--inter); font-weight: 700; font-size: 13px; color: var(--ink);
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em;
+  }
+
+  .datetime {
+    font-family: var(--inter); font-size: 15px; font-weight: 500; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    padding: 12px 14px; background: var(--cream);
+    border: 2px solid var(--ink); line-height: 1.4;
+  }
+
+  /* ---- sliders ---- */
+  .slider-block { margin-top: 16px; }
+  .slider-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .slider-head .name { font-family: var(--inter); font-weight: 700; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.05em; }
+  .slider-head .val {
+    font-family: var(--inter); font-weight: 900; font-size: 16px; color: #000;
+    min-width: 34px; text-align: center; background: var(--yellow);
+    padding: 4px 8px; border: 2px solid var(--ink); box-shadow: 2px 2px 0 #000;
+    font-variant-numeric: tabular-nums;
+  }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 16px;
+    border-radius: 0; outline: none;
+    background: linear-gradient(90deg, var(--ink) 0 var(--fill,50%), var(--cream) var(--fill,50%) 100%);
+    border: 2px solid var(--ink);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 20px; height: 20px; border-radius: 0;
+    background: var(--yellow); border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 #000; cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 0;
+    background: var(--yellow); border: 2px solid var(--ink); cursor: pointer;
+  }
+
+  textarea {
+    width: 100%; resize: none; height: 70px; padding: 12px 14px;
+    border-radius: 0; background: var(--cream);
+    border: 2px solid var(--ink); color: var(--ink);
+    font-family: var(--inter); font-weight: 400; font-size: 15px;
+  }
+  textarea::placeholder { color: var(--grey); }
+  .char-count { font-family: var(--inter); font-weight: 500; text-align: right; font-size: 12px; color: var(--grey); margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+  .btn-primary {
+    width: 100%; margin-top: 16px; padding: 16px; border: 3px solid var(--ink); border-radius: 0;
+    font-family: var(--inter); font-weight: 700; font-size: 16px; color: var(--ink); cursor: pointer;
+    background: var(--green); box-shadow: var(--shadow);
+    transition: none; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .btn-primary:active { transform: translate(4px,4px); box-shadow: 0 0 0 #000; }
+
+  /* ---- log cards (mood-coded) ---- */
+  .log-card { padding: 14px 16px; margin-top: 14px; position: relative; overflow: hidden;
+    border: 3px solid var(--ink); box-shadow: var(--shadow); color: var(--ink); }
+  .log-card.mood-5, .log-card.mood-4 { background: var(--yellow); color: var(--ink); }
+  .log-card.mood-4 { background: #F2D98C; }
+  .log-card.mood-3 { background: var(--red); color: #fff; }
+  .log-card.mood-2 { background: var(--blue); color: #fff; }
+  .log-card.mood-1 { background: var(--purple); color: #fff; }
+  .log-card .swipe-inner { transition: transform .1s steps(3); background: transparent; }
+  .log-card .row1 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .log-card .mood-head { display: flex; align-items: center; gap: 8px; }
+  .log-card .mood-emoji { font-size: 24px; }
+  .log-card .mood-label { font-family: var(--inter); font-weight: 900; font-size: 24px;
+    text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; }
+  .log-card .person { font-family: var(--inter); font-weight: 700; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.05em; }
+  .log-card .time { font-family: var(--inter); font-weight: 500; font-size: 13px;
+    text-align: right; line-height: 1.6; font-variant-numeric: tabular-nums; }
+  .hr { height: 1px; background: currentColor; opacity: .85; margin: 12px 0; }
+  .metrics { display: flex; gap: 24px; }
+  .metric { display: flex; flex-direction: column; gap: 6px; }
+  .metric .m-lab { font-family: var(--inter); font-weight: 700; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em; }
+  .blocks { display: flex; gap: 3px; }
+  .blk { width: 13px; height: 13px; border: 2px solid currentColor; }
+  .blk.on { background: currentColor; }
+  .blk.off { background: transparent; }
+  .note { font-size: 15px; line-height: 1.5; font-family: var(--inter); font-weight: 400; }
+  .del-btn {
+    position: absolute; top: 0; right: 0; height: 100%; width: 88px;
+    background: var(--ink); color: var(--red); border: none; border-left: 3px solid var(--red); border-radius: 0;
+    font-family: var(--inter); font-weight: 700; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.05em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .empty {
+    text-align: center; padding: 40px 20px; margin-top: 14px;
+    background: #fff; border: 3px solid var(--ink); box-shadow: var(--shadow);
+    color: var(--ink); font-family: var(--inter); font-weight: 700; font-size: 15px;
+    text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.9;
+  }
+  .empty .big-emoji { font-size: 56px; display: block; margin-bottom: 18px; }
+
+  /* ---- graph ---- */
+  .chart-wrap { padding: 14px 12px 12px; margin-top: 14px; }
+  .chart-wrap .c-title { font-family: var(--inter); font-weight: 700; font-size: 14px; color: var(--ink);
+    margin: 0 4px 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  canvas { width: 100%; display: block; }
+
+  /* ---- bottom nav ---- */
+  nav.tabbar {
+    position: fixed; left: 0; right: 0;
+    bottom: 0; padding: 12px 6px calc(12px + var(--safe-bot));
+    display: flex; justify-content: space-around;
+    background: var(--ink); border: none;
+    border-radius: 0; box-shadow: none; z-index: 10;
+  }
+  .tab-btn {
+    flex: 1; background: none; border: none; color: #666; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-family: var(--inter); font-weight: 600; font-size: 11px; letter-spacing: 0.03em;
+    padding: 6px 0 8px; border-radius: 0;
+  }
+  .tab-btn .ico { font-size: 18px; }
+  .tab-btn.active { color: var(--yellow); box-shadow: inset 0 -3px 0 var(--yellow); }
+
+  /* ---- toast ---- */
+  #toast {
+    position: fixed; left: 50%; bottom: calc(108px + var(--safe-bot));
+    transform: translate(-50%, 0); opacity: 0; pointer-events: none; visibility: hidden;
+    padding: 14px 18px; font-family: var(--inter); font-weight: 700; font-size: 14px;
+    text-transform: uppercase; letter-spacing: 0.05em; color: var(--yellow);
+    background: var(--ink); border: 3px solid var(--ink); border-radius: 0;
+    box-shadow: var(--shadow); z-index: 50; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; visibility: visible; animation: toastpop .15s steps(3) both; }
+  @keyframes toastpop { from { transform: translate(-50%, 24px);} to { transform: translate(-50%, 0);} }
+</style>
+</head>
+<body>
+<div id="bg">
+  <div class="sky"></div>
+  <div class="sun"></div>
+  <div class="mtn mtn-back"></div>
+  <div class="mtn mtn-mid"></div>
+  <div class="mtn mtn-front"></div>
+  <div class="snow snow1"></div>
+  <div class="snow snow2"></div>
+  <div class="snow snow3"></div>
+  <div class="ground"></div>
+</div>
+<div id="app">
+  <header class="app-head">
+    <h1><span class="t-y">TRAIL</span> <span class="t-k">LOG</span></h1>
+    <p><span class="dot"></span>ACTIVE</p>
+  </header>
+
+  <main>
+    <!-- ========== LOG TAB ========== -->
+    <section id="view-log" class="tab-view active">
+      <div class="label">Who's logging?</div>
+      <div class="pill-row" id="log-people"></div>
+
+      <div class="glass panel">
+        <div class="label">When</div>
+        <div class="datetime" id="dt-label">—</div>
+
+        <div style="margin-top:16px"></div>
+        <div class="slider-block">
+          <div class="slider-head"><span class="name"><span id="m-face">😐</span> Mood</span><span class="val" id="v-mood">3</span></div>
+          <input type="range" min="1" max="5" step="1" value="3" id="s-mood">
+        </div>
+        <div class="slider-block">
+          <div class="slider-head"><span class="name">⚡ Energy</span><span class="val" id="v-energy">3</span></div>
+          <input type="range" min="1" max="5" step="1" value="3" id="s-energy">
+        </div>
+        <div class="slider-block">
+          <div class="slider-head"><span class="name">🍽️ Hunger</span><span class="val" id="v-hunger">3</span></div>
+          <input type="range" min="1" max="5" step="1" value="3" id="s-hunger">
+        </div>
+
+        <div style="margin-top:16px"></div>
+        <div class="label">Note</div>
+        <textarea id="note" maxlength="100" placeholder="How are you feeling?"></textarea>
+        <div class="char-count"><span id="cc">0</span>/100</div>
+
+        <button class="btn-primary" id="save-btn">Log Entry</button>
+      </div>
+    </section>
+
+    <!-- ========== LOGS TAB ========== -->
+    <section id="view-logs" class="tab-view">
+      <div class="pill-row" id="filter-people"></div>
+      <div id="log-list"></div>
+    </section>
+
+    <!-- ========== GRAPH TAB ========== -->
+    <section id="view-graph" class="tab-view">
+      <div class="pill-row" id="graph-people"></div>
+      <div id="graph-area"></div>
+    </section>
+  </main>
+
+  <nav class="tabbar glass">
+    <button class="tab-btn active" data-tab="log"><span class="ico">✏️</span>Log</button>
+    <button class="tab-btn" data-tab="logs"><span class="ico">📋</span>Logs</button>
+    <button class="tab-btn" data-tab="graph"><span class="ico">📈</span>Graph</button>
+  </nav>
+</div>
+<div id="toast" class="glass"></div>
+
+<script>
+"use strict";
+const PEOPLE = ["Fedir", "Iver", "Krishav", "Sayan", "Yasas", "Tengo"];
+
+/* ---------------- IndexedDB ---------------- */
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open("traillog", 1);
+    r.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains("entries"))
+        d.createObjectStore("entries", { keyPath: "id", autoIncrement: true });
+    };
+    r.onsuccess = e => { db = e.target.result; res(db); };
+    r.onerror = e => rej(e.target.error);
+  });
+}
+function addEntry(entry) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction("entries", "readwrite");
+    tx.objectStore("entries").add(entry);
+    tx.oncomplete = () => res();
+    tx.onerror = e => rej(e.target.error);
+  });
+}
+function getAll() {
+  return new Promise((res, rej) => {
+    const tx = db.transaction("entries", "readonly");
+    const req = tx.objectStore("entries").getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+function deleteEntry(id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction("entries", "readwrite");
+    tx.objectStore("entries").delete(id);
+    tx.oncomplete = () => res();
+    tx.onerror = e => rej(e.target.error);
+  });
+}
+
+/* ---------------- State ---------------- */
+let selectedPerson = PEOPLE[0];
+let filterPerson = "All";
+let graphPerson = PEOPLE[0];
+
+/* ---------------- Helpers ---------------- */
+const $ = id => document.getElementById(id);
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function pad(n){ return String(n).padStart(2,"0"); }
+function fmtFull(iso){
+  const d = new Date(iso);
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtHM(iso){ const d = new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function nowLabel(){
+  const d = new Date();
+  return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* ---------------- Pill builders ---------------- */
+function buildPills(container, names, current, onPick){
+  container.innerHTML = "";
+  names.forEach(n => {
+    const b = document.createElement("button");
+    b.className = "pill" + (n === current ? " active" : "");
+    b.textContent = n;
+    b.onclick = () => onPick(n);
+    container.appendChild(b);
+  });
+}
+
+/* ---------------- LOG tab ---------------- */
+function renderLogPeople(){
+  buildPills($("log-people"), PEOPLE, selectedPerson, n => {
+    selectedPerson = n; renderLogPeople();
+  });
+}
+const MOOD_FACES = { 1: "🫩", 2: "😮‍💨", 3: "😐", 4: "😊", 5: "😄" }; // exhausted -> excited
+function updateMoodFace(v){ $("m-face").textContent = MOOD_FACES[v] || "😐"; }
+function updateFill(s){
+  // black track fill follows the thumb position (value 1..5 -> 0..100%)
+  const pct = ((s.value - s.min) / (s.max - s.min)) * 100;
+  s.style.setProperty("--fill", pct + "%");
+}
+function bindSlider(sliderId, valId){
+  const s = $(sliderId), v = $(valId);
+  const isMood = sliderId === "s-mood";
+  updateFill(s);
+  if (isMood) updateMoodFace(+s.value);
+  s.addEventListener("input", () => {
+    v.textContent = s.value; updateFill(s);
+    if (isMood) updateMoodFace(+s.value);
+  });
+}
+function resetForm(){
+  ["s-mood","s-energy","s-hunger"].forEach(id => { const s = $(id); s.value = 3; updateFill(s); });
+  ["v-mood","v-energy","v-hunger"].forEach(id => $(id).textContent = 3);
+  updateMoodFace(3);
+  $("note").value = ""; $("cc").textContent = "0";
+}
+let dtTimer;
+function tickDateTime(){ $("dt-label").textContent = nowLabel(); }
+
+async function saveEntry(){
+  const entry = {
+    person: selectedPerson,
+    mood: +$("s-mood").value,
+    energy: +$("s-energy").value,
+    hunger: +$("s-hunger").value,
+    timestamp: new Date().toISOString(),
+    note: $("note").value.trim()
+  };
+  await addEntry(entry);
+  showToast(`✓ Logged for ${selectedPerson}`);
+  resetForm();
+}
+
+/* ---------------- Toast ---------------- */
+let toastTimer;
+function showToast(msg){
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+/* ---------------- LOGS tab ---------------- */
+function renderFilterPills(){
+  buildPills($("filter-people"), ["All", ...PEOPLE], filterPerson, n => {
+    filterPerson = n; renderFilterPills(); renderLogs();
+  });
+}
+async function renderLogs(){
+  const list = $("log-list");
+  let all = await getAll();
+  all.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  if (filterPerson !== "All") all = all.filter(e => e.person === filterPerson);
+
+  if (!all.length){
+    list.innerHTML = `<div class="empty"><span class="big-emoji">🏔️</span>NO LOGS YET<br>START ON THE TRAIL</div>`;
+    return;
+  }
+  list.innerHTML = "";
+  all.forEach(e => list.appendChild(logCard(e)));
+}
+const MOODS = {
+  5: { label: "EPIC", emoji: "🔥" },
+  4: { label: "GOOD", emoji: "😊" },
+  3: { label: "OKAY", emoji: "😐" },
+  2: { label: "MEH",  emoji: "😕" },
+  1: { label: "LOW",  emoji: "😞" }
+};
+function fmt12(iso){
+  const d = new Date(iso);
+  let h = d.getHours(); const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${pad(h)}:${pad(d.getMinutes())} ${ap}`;
+}
+function fmtDate(iso){
+  const d = new Date(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+function metricEl(lab, val){
+  const d = document.createElement("div");
+  d.className = "metric";
+  let blocks = "";
+  for (let i = 1; i <= 5; i++) blocks += `<span class="blk ${i <= val ? "on" : "off"}"></span>`;
+  d.innerHTML = `<span class="m-lab">${lab}</span><span class="blocks">${blocks}</span>`;
+  return d;
+}
+function logCard(e){
+  const m = MOODS[e.mood] || MOODS[3];
+  const card = document.createElement("div");
+  card.className = "log-card mood-" + e.mood;
+
+  const inner = document.createElement("div");
+  inner.className = "swipe-inner";
+  inner.innerHTML = `
+    <div class="row1">
+      <span class="mood-head"><span class="mood-emoji">${m.emoji}</span><span class="mood-label">${m.label}</span></span>
+      <span class="time">${fmt12(e.timestamp)}<br>${fmtDate(e.timestamp)}<br><span class="person">${e.person}</span></span>
+    </div>`;
+  inner.insertAdjacentHTML("beforeend", `<div class="hr"></div>`);
+  if (e.note){
+    const n = document.createElement("div");
+    n.className = "note"; n.textContent = `"${e.note}"`;
+    inner.appendChild(n);
+    inner.insertAdjacentHTML("beforeend", `<div class="hr"></div>`);
+  }
+  const metrics = document.createElement("div");
+  metrics.className = "metrics";
+  metrics.appendChild(metricEl("HUNGER", e.hunger));
+  metrics.appendChild(metricEl("ENERGY", e.energy));
+  inner.appendChild(metrics);
+
+  const del = document.createElement("button");
+  del.className = "del-btn"; del.textContent = "Delete";
+  del.style.display = "none";
+  del.onclick = async (ev) => {
+    ev.stopPropagation();
+    await deleteEntry(e.id);
+    renderLogs();
+  };
+
+  card.appendChild(inner);
+  card.appendChild(del);
+
+  // swipe-left + long-press reveal
+  let revealed = false, startX = 0, dx = 0, lpTimer;
+  function reveal(on){
+    revealed = on;
+    inner.style.transform = on ? "translateX(-88px)" : "translateX(0)";
+    del.style.display = on ? "flex" : "none";
+  }
+  card.addEventListener("touchstart", ev => {
+    startX = ev.touches[0].clientX; dx = 0;
+    lpTimer = setTimeout(() => reveal(true), 500);
+  }, {passive:true});
+  card.addEventListener("touchmove", ev => {
+    dx = ev.touches[0].clientX - startX;
+    if (Math.abs(dx) > 8) clearTimeout(lpTimer);
+  }, {passive:true});
+  card.addEventListener("touchend", () => {
+    clearTimeout(lpTimer);
+    if (dx < -40) reveal(true);
+    else if (dx > 40) reveal(false);
+  });
+  // desktop fallback: click toggles
+  card.addEventListener("click", () => { if (dx === 0) reveal(!revealed); });
+  return card;
+}
+
+/* ---------------- GRAPH tab ---------------- */
+function renderGraphPeople(){
+  buildPills($("graph-people"), PEOPLE, graphPerson, n => {
+    graphPerson = n; renderGraphPeople(); renderGraphs();
+  });
+}
+async function renderGraphs(){
+  const area = $("graph-area");
+  area.innerHTML = "";
+  let all = await getAll();
+  all = all.filter(e => e.person === graphPerson)
+           .sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  if (all.length < 2){
+    area.innerHTML = `<div class="empty"><span class="big-emoji">🏔️</span>NOT ENOUGH<br>DATA YET</div>`;
+    return;
+  }
+  [["Mood","mood","#4A90E2"],["Energy","energy","#00C851"],["Hunger","hunger","#FF8C00"]]
+    .forEach(([title,key,color]) => area.appendChild(chartCard(title, all, key, color)));
+}
+function chartCard(title, data, key, color){
+  const wrap = document.createElement("div");
+  wrap.className = "glass chart-wrap";
+  const t = document.createElement("div"); t.className = "c-title"; t.textContent = title;
+  wrap.appendChild(t);
+  const cv = document.createElement("canvas");
+  wrap.appendChild(cv);
+  // defer draw until in DOM for correct width
+  requestAnimationFrame(() => drawChart(cv, data, key, color));
+  return wrap;
+}
+function drawChart(cv, data, key, color){
+  // pop-art print style: cream bg, straight segments, square dots w/ black border
+  const CREAM = "#F5F0E8", GRID = "#DDDDDD", INK = "#000000";
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = cv.clientWidth || 320, cssH = 150;
+  cv.width = cssW * dpr; cv.height = cssH * dpr;
+  cv.style.height = cssH + "px";
+  const ctx = cv.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.imageSmoothingEnabled = false;
+
+  // background
+  ctx.fillStyle = CREAM;
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  const padL = 26, padR = 12, padT = 12, padB = 24;
+  const W = cssW - padL - padR, H = cssH - padT - padB;
+  const yFor = v => padT + H - ((v - 1) / 4) * H;
+  const xFor = i => padL + (data.length === 1 ? W/2 : (i/(data.length-1)) * W);
+
+  // grid + Y labels 1..5
+  ctx.font = "700 11px 'Inter', system-ui, sans-serif";
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v=1; v<=5; v++){
+    const y = Math.round(yFor(v)) + 0.5;
+    ctx.strokeStyle = GRID; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(cssW - padR, y); ctx.stroke();
+    ctx.fillStyle = INK; ctx.fillText(v, padL - 6, y);
+  }
+
+  const pts = data.map((e,i) => ({ x: xFor(i), y: yFor(e[key]) }));
+
+  // line — straight segments, no curve smoothing
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.lineJoin = "miter"; ctx.stroke();
+
+  // square data dots 6x6, metric colour fill + black border
+  pts.forEach(p => {
+    const x = Math.round(p.x) - 3, y = Math.round(p.y) - 3;
+    ctx.fillStyle = color; ctx.fillRect(x, y, 6, 6);
+    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, 6, 6);
+  });
+
+  // X time labels (first, mid, last) in mono
+  ctx.fillStyle = INK;
+  ctx.font = "500 11px 'Inter', system-ui, sans-serif";
+  ctx.textBaseline = "top";
+  const idxs = data.length <= 3 ? data.map((_,i)=>i) : [0, Math.floor((data.length-1)/2), data.length-1];
+  idxs.forEach(i => {
+    ctx.textAlign = i === 0 ? "left" : (i === data.length-1 ? "right" : "center");
+    ctx.fillText(fmtHM(data[i].timestamp), xFor(i), padT + H + 8);
+  });
+}
+
+/* ---------------- Tab switching ---------------- */
+function switchTab(tab){
+  document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  $("view-" + tab).classList.add("active");
+  if (tab === "log") tickDateTime();
+  if (tab === "logs") renderLogs();
+  if (tab === "graph") renderGraphs();
+}
+
+/* ---------------- Init ---------------- */
+async function init(){
+  await openDB();
+  renderLogPeople();
+  renderFilterPills();
+  renderGraphPeople();
+  bindSlider("s-mood","v-mood");
+  bindSlider("s-energy","v-energy");
+  bindSlider("s-hunger","v-hunger");
+  $("note").addEventListener("input", () => $("cc").textContent = $("note").value.length);
+  $("save-btn").addEventListener("click", saveEntry);
+  document.querySelectorAll(".tab-btn").forEach(b =>
+    b.addEventListener("click", () => switchTab(b.dataset.tab)));
+  tickDateTime();
+  dtTimer = setInterval(tickDateTime, 15000);
+  // redraw graphs on resize/orientation
+  window.addEventListener("resize", () => {
+    if ($("view-graph").classList.contains("active")) renderGraphs();
+  });
+}
+init();
+
+/* ---------------- Service worker ---------------- */
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

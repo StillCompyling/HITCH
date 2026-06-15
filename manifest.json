@@ -1,0 +1,25 @@
+{
+  "name": "Trail Log",
+  "short_name": "Trail Log",
+  "description": "Hike wellness logger for the trail",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c2230",
+  "theme_color": "#0c2230",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='192'%20height='192'%20viewBox='0%200%20192%20192'%3E%3Crect%20width='192'%20height='192'%20rx='42'%20fill='%230c2230'/%3E%3Cpath%20d='M30%20150L78%2066l30%2050%2018-28%2036%2062z'%20fill='%237fb0c0'/%3E%3Cpath%20d='M78%2066l30%2050%2018-28%2036%2062H96z'%20fill='%23dfeef2'%20opacity='0.85'/%3E%3Cpath%20d='M30%20150L78%2066l16%2028-24%2056z'%20fill='%235b8aa0'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='512'%20height='512'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20rx='112'%20fill='%230c2230'/%3E%3Cpath%20d='M80%20400L208%20176l80%20134%2048-76%2096%20166z'%20fill='%237fb0c0'/%3E%3Cpath%20d='M208%20176l80%20134%2048-76%2096%20166H256z'%20fill='%23dfeef2'%20opacity='0.85'/%3E%3Cpath%20d='M80%20400L208%20176l42%2076-64%20148z'%20fill='%235b8aa0'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
