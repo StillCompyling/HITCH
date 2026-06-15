@@ -311,7 +311,7 @@
 
 <script>
 "use strict";
-const PEOPLE = ["Fedir", "Iver", "Krishav", "Sayan", "Yasas", "Tengo"];
+const PEOPLE = ["Fedir", "Iver", "Krishav", "Sayan", "Yasas", "Tengo", "Daniel"];
 
 /* ---------------- IndexedDB ---------------- */
 let db;
@@ -393,7 +393,7 @@ function enableSaveBtn(){
 function disableSaveBtn(){
   const b = $("save-btn"); if (b) b.disabled = true;
   clearTimeout(lockTimer);
-  lockTimer = setTimeout(enableSaveBtn, 5 * 60 * 1000);
+  lockTimer = setTimeout(enableSaveBtn, 5 * 1000);
 }
 function renderLogPeople(){
   buildPills($("log-people"), PEOPLE, selectedPerson, n => {
@@ -444,10 +444,10 @@ async function saveEntry(){
     const existing = await getAll();
     const dup = existing.some(entry =>
       entry.person === selectedPerson &&
-      (new Date() - new Date(entry.timestamp)) < 5 * 60 * 1000
+      (new Date() - new Date(entry.timestamp)) < 5 * 1000
     );
     if (dup){
-      showToast("⚠ Already logged for " + selectedPerson + ". Wait 5 mins.");
+      showToast("⚠ Already logged for " + selectedPerson + ". Wait 5 secs.");
       return;
     }
     const entry = {
