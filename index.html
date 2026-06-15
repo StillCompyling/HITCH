@@ -414,29 +414,36 @@ function resetForm(){
 let dtTimer;
 function tickDateTime(){ $("dt-label").textContent = nowLabel(); }
 
+let saving = false; // re-entrancy lock: blocks rapid double-clicks racing the async dup check
 async function saveEntry(){
-  const now = Date.now();
-  // duplicate guard: block if same person logged within last 1 minute
-  const existing = await getAll();
-  const dup = existing.some(e =>
-    e.person === selectedPerson &&
-    Math.abs(now - new Date(e.timestamp).getTime()) < 1 * 60 * 1000
-  );
-  if (dup){
-    showToast(`⚠ Already logged for ${selectedPerson} recently. Wait 1 min.`);
-    return;
+  if (saving) return;
+  saving = true;
+  try {
+    const now = Date.now();
+    // duplicate guard: block if same person logged within last 1 minute
+    const existing = await getAll();
+    const dup = existing.some(e =>
+      e.person === selectedPerson &&
+      Math.abs(now - new Date(e.timestamp).getTime()) < 1 * 60 * 1000
+    );
+    if (dup){
+      showToast(`⚠ Already logged for ${selectedPerson} recently. Wait 1 min.`);
+      return;
+    }
+    const entry = {
+      person: selectedPerson,
+      mood: +$("s-mood").value,
+      energy: +$("s-energy").value,
+      hunger: +$("s-hunger").value,
+      timestamp: new Date().toISOString(),
+      note: $("note").value.trim()
+    };
+    await addEntry(entry);
+    showToast(`✓ Logged for ${selectedPerson}`);
+    resetForm();
+  } finally {
+    saving = false;
   }
-  const entry = {
-    person: selectedPerson,
-    mood: +$("s-mood").value,
-    energy: +$("s-energy").value,
-    hunger: +$("s-hunger").value,
-    timestamp: new Date().toISOString(),
-    note: $("note").value.trim()
-  };
-  await addEntry(entry);
-  showToast(`✓ Logged for ${selectedPerson}`);
-  resetForm();
 }
 
 /* ---------------- Toast ---------------- */
