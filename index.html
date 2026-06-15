@@ -429,7 +429,14 @@ let dtTimer;
 function tickDateTime(){ $("dt-label").textContent = nowLabel(); }
 
 let saving = false; // re-entrancy lock: blocks rapid double-clicks racing the async dup check
+let lastSaveAttempt = 0;
 async function saveEntry(){
+  const now = Date.now();
+  if (now - lastSaveAttempt < 500) {
+    showToast("⏳ Slow down!");
+    return;
+  }
+  lastSaveAttempt = now;
   if (saving) return;
   saving = true;
   try {
