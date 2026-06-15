@@ -415,6 +415,17 @@ let dtTimer;
 function tickDateTime(){ $("dt-label").textContent = nowLabel(); }
 
 async function saveEntry(){
+  const now = Date.now();
+  // duplicate guard: block if same person logged within last 5 minutes
+  const existing = await getAll();
+  const dup = existing.some(e =>
+    e.person === selectedPerson &&
+    Math.abs(now - new Date(e.timestamp).getTime()) < 5 * 60 * 1000
+  );
+  if (dup){
+    showToast(`⚠ Already logged for ${selectedPerson} recently. Wait 5 mins.`);
+    return;
+  }
   const entry = {
     person: selectedPerson,
     mood: +$("s-mood").value,
