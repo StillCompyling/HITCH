@@ -416,14 +416,14 @@ function tickDateTime(){ $("dt-label").textContent = nowLabel(); }
 
 async function saveEntry(){
   const now = Date.now();
-  // duplicate guard: block if same person logged within last 5 minutes
+  // duplicate guard: block if same person logged within last 1 minute
   const existing = await getAll();
   const dup = existing.some(e =>
     e.person === selectedPerson &&
-    Math.abs(now - new Date(e.timestamp).getTime()) < 5 * 60 * 1000
+    Math.abs(now - new Date(e.timestamp).getTime()) < 1 * 60 * 1000
   );
   if (dup){
-    showToast(`⚠ Already logged for ${selectedPerson} recently. Wait 5 mins.`);
+    showToast(`⚠ Already logged for ${selectedPerson} recently. Wait 1 min.`);
     return;
   }
   const entry = {
