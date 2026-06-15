@@ -62,16 +62,6 @@
   }
   header.app-head h1 .t-y { color: var(--yellow); }
   header.app-head h1 .t-k { color: #fff; }
-  header.app-head p {
-    font-family: var(--inter); font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-    color: var(--green); display: flex; align-items: center; gap: 6px;
-  }
-  header.app-head .dot {
-    width: 9px; height: 9px; background: var(--green); border-radius: 50%;
-    animation: pulse 1.1s steps(1) infinite;
-  }
-  @keyframes pulse { 0%,49%{opacity:1;} 50%,100%{opacity:.25;} }
-
   main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
     padding: 12px 16px calc(96px + var(--safe-bot)); }
   .tab-view { display: none; }
@@ -252,7 +242,6 @@
 <div id="app">
   <header class="app-head">
     <h1><span class="t-y">TRAIL</span> <span class="t-k">LOG</span></h1>
-    <p><span class="dot"></span>ACTIVE</p>
   </header>
 
   <main>
@@ -393,7 +382,7 @@ function enableSaveBtn(){
 function disableSaveBtn(){
   const b = $("save-btn"); if (b) b.disabled = true;
   clearTimeout(lockTimer);
-  lockTimer = setTimeout(enableSaveBtn, 5 * 1000);
+  lockTimer = setTimeout(enableSaveBtn, 2 * 1000);
 }
 function renderLogPeople(){
   buildPills($("log-people"), PEOPLE, selectedPerson, n => {

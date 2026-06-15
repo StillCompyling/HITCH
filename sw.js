@@ -1,5 +1,5 @@
 // Trail Log service worker — cache-first for full offline use
-const CACHE = "traillog-v4";
+const CACHE = "traillog-v5";
 const ASSETS = [
   "./",
   "./index.html",
